@@ -2,17 +2,17 @@
 
 An advanced, real-time autonomous intelligence system powered by multi-agent AI workflows, persistent RAG vector memory, and dynamic web search capabilities.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-ai--system--live.loca.lt-6366f1?style=for-the-badge&logo=fastapi)](https://ai-system-live.loca.lt)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20App-06b6d4?style=for-the-badge&logo=github)](https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/)
+[![Live Web Application](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-06b6d4?style=for-the-badge&logo=github)](https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/)
+[![Backend Tunnel](https://img.shields.io/badge/Backend%20Tunnel-ai--system--backend.loca.lt-6366f1?style=for-the-badge&logo=fastapi)](https://ai-system-backend.loca.lt)
 [![Python](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python-3776AB?style=for-the-badge&logo=python)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react)](https://vitejs.dev)
 
 ---
 
-## 🌟 Live Links & Demonstration
+## 🌟 Live Demonstration Links
 
-- 🌐 **Live Interactive Application**: [https://ai-system-live.loca.lt](https://ai-system-live.loca.lt)
-- 🐙 **GitHub Pages Deployment**: [https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/](https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/)
+- 🌐 **Primary Live Application (GitHub Pages)**: [https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/](https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/)
+- ⚡ **Backend Tunnel Service**: [https://ai-system-backend.loca.lt](https://ai-system-backend.loca.lt)
 - ⚙️ **Backend API Documentation (Swagger UI)**: `http://localhost:8000/docs`
 
 ---
@@ -53,7 +53,6 @@ graph TD
 
 ## 🛠️ Tech Stack & Directory Structure
 
-### **Directory Overview**
 ```text
 real_time_global_event_Analyzer/
 ├── backend/                  # FastAPI Python backend
@@ -82,38 +81,25 @@ real_time_global_event_Analyzer/
 
 ### 2. Backend Setup
 ```bash
-# Navigate to backend directory
 cd backend
-
-# Create virtual environment
 python -m venv venv
 
-# Activate virtual environment
-# Windows PowerShell:
+# Activate Virtual Environment (Windows PowerShell)
 .\venv\Scripts\Activate.ps1
-# Mac/Linux:
-source venv/bin/activate
 
-# Install dependencies
+# Install Dependencies & Run Server
 pip install -r requirements.txt
-
-# Run FastAPI Server
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 ### 3. Frontend Setup
 ```bash
-# Navigate to frontend directory
 cd ../frontend
-
-# Install dependencies
 npm install
-
-# Start Vite Dev Server
 npm run dev -- --host 0.0.0.0
 ```
 
-Open **`http://localhost:3000`** in your browser to access the live dashboard.
+Open **`http://localhost:3000`** in your browser to access the local dashboard.
 
 ---
 
