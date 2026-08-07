@@ -34,7 +34,7 @@ import {
   ShieldCheck
 } from 'lucide-react'
 
-const DEFAULT_TUNNEL_URL = 'https://ai-system-live.loca.lt'
+const DEFAULT_TUNNEL_URL = 'https://ai-system-live.loca.lt/api'
 
 const getInitialBackendUrl = () => {
   const saved = localStorage.getItem('custom_backend_url')
@@ -95,7 +95,11 @@ export default function App() {
       }
     }
 
-    const targetBase = backendUrl.trim().replace(/\/$/, '')
+    let targetBase = backendUrl.trim().replace(/\/$/, '')
+    if (targetBase.includes('.loca.lt') && !targetBase.endsWith('/api')) {
+      targetBase = `${targetBase}/api`
+    }
+
     return await fetch(`${targetBase}${cleanEndpoint}`, { ...options, headers })
   }
 
