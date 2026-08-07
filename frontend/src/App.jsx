@@ -34,7 +34,16 @@ import {
   ShieldCheck
 } from 'lucide-react'
 
-const BACKEND_URL = 'http://127.0.0.1:8000'
+const DEFAULT_TUNNEL_URL = 'https://ai-system-live.loca.lt'
+
+const getInitialBackendUrl = () => {
+  const saved = localStorage.getItem('custom_backend_url')
+  if (saved && saved.trim()) return saved.trim()
+  if (typeof window !== 'undefined' && window.location.hostname.includes('github.io')) {
+    return DEFAULT_TUNNEL_URL
+  }
+  return 'http://127.0.0.1:8000'
+}
 
 export default function App() {
   const [query, setQuery] = useState('')
@@ -46,6 +55,10 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [copied, setCopied] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  // Backend Connection URL State
+  const [backendUrl, setBackendUrl] = useState(getInitialBackendUrl)
+  const [backendUrlInput, setBackendUrlInput] = useState(backendUrl)
 
   // Automated Scans, Risks & Persistent Vector Memory
   const [scanStatus, setScanStatus] = useState(null)
@@ -64,6 +77,27 @@ export default function App() {
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsNotice, setSettingsNotice] = useState('')
 
+  // Helper for cross-origin backend calls with tunnel bypass headers
+  const apiFetch = async (endpoint, options = {}) => {
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    const headers = {
+      'bypass-tunnel-reminder': 'true',
+      'ngrok-skip-browser-warning': 'true',
+      ...(options.headers || {})
+    }
+
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      try {
+        const localRes = await fetch(`/api${cleanEndpoint}`, { ...options, headers })
+        if (localRes && (localRes.ok || localRes.status !== 404)) return localRes
+      } catch (e) {
+        // Fallback to explicit backendUrl
+      }
+    }
+
+    const targetBase = backendUrl.trim().replace(/\/$/, '')
+    return await fetch(`${targetBase}${cleanEndpoint}`, { ...options, headers })
+  }
 
   // Loading text animation
   const [loadingText, setLoadingText] = useState('Initializing pipeline...')
@@ -90,31 +124,21 @@ export default function App() {
   // Check backend server status
   const checkHealth = async () => {
     try {
-      let res
-      try {
-        res = await fetch('/api/')
-      } catch {
-        res = await fetch(`${BACKEND_URL}/`)
-      }
+      const res = await apiFetch('/')
       if (res && res.ok) {
         const data = await res.json()
         setSystemStatus({ online: true, message: data.status || 'System Running 🚀' })
       } else {
-        setSystemStatus({ online: false, message: 'Server unreachable' })
+        setSystemStatus({ online: false, message: `Server unreachable (${backendUrl})` })
       }
     } catch (err) {
-      setSystemStatus({ online: false, message: 'Server offline (127.0.0.1:8000)' })
+      setSystemStatus({ online: false, message: `Server offline (${backendUrl})` })
     }
   }
 
   const fetchScanStatus = async () => {
     try {
-      let res
-      try {
-        res = await fetch('/api/scan/status')
-      } catch {
-        res = await fetch(`${BACKEND_URL}/scan/status`)
-      }
+      const res = await apiFetch('/scan/status')
       if (res && res.ok) {
         const data = await res.json()
         setScanStatus(data)
@@ -126,12 +150,7 @@ export default function App() {
 
   const fetchSectorRisks = async () => {
     try {
-      let res
-      try {
-        res = await fetch('/api/risks')
-      } catch {
-        res = await fetch(`${BACKEND_URL}/risks`)
-      }
+      const res = await apiFetch('/risks')
       if (res && res.ok) {
         const data = await res.json()
         setSectorRisks(data.risks || [])
@@ -143,12 +162,7 @@ export default function App() {
 
   const fetchVectorMemories = async () => {
     try {
-      let res
-      try {
-        res = await fetch('/api/memory')
-      } catch {
-        res = await fetch(`${BACKEND_URL}/memory`)
-      }
+      const res = await apiFetch('/memory')
       if (res && res.ok) {
         const data = await res.json()
         setVectorMemories(data.memories || [])
@@ -162,12 +176,7 @@ export default function App() {
     setScanTriggering(true)
     setScanNotice('')
     try {
-      let res
-      try {
-        res = await fetch('/api/scan/daily', { method: 'POST' })
-      } catch {
-        res = await fetch(`${BACKEND_URL}/scan/daily`, { method: 'POST' })
-      }
+      const res = await apiFetch('/scan/daily', { method: 'POST' })
       if (res && res.ok) {
         setScanNotice('Automated daily scan batch triggered across all monitored sectors!')
         setTimeout(() => {
@@ -185,12 +194,7 @@ export default function App() {
 
   const fetchSettingsStatus = async () => {
     try {
-      let res
-      try {
-        res = await fetch('/api/settings/status')
-      } catch {
-        res = await fetch(`${BACKEND_URL}/settings/status`)
-      }
+      const res = await apiFetch('/settings/status')
       if (res && res.ok) {
         const data = await res.json()
         setLlmStatus(data)
@@ -205,37 +209,35 @@ export default function App() {
     setSavingSettings(true)
     setSettingsNotice('')
     try {
-      let res
+      const newUrl = backendUrlInput.trim().replace(/\/$/, '')
+      if (newUrl) {
+        localStorage.setItem('custom_backend_url', newUrl)
+        setBackendUrl(newUrl)
+      }
+
       const body = {
         openai_key: openaiKeyInput.trim() || null,
         gemini_key: geminiKeyInput.trim() || null,
         preferred_provider: preferredProviderInput
       }
-      try {
-        res = await fetch('/api/settings/keys', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        })
-      } catch {
-        res = await fetch(`${BACKEND_URL}/settings/keys`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        })
-      }
+      const res = await apiFetch('/settings/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+
       if (res && res.ok) {
         const data = await res.json()
         setLlmStatus(data.status)
-        setSettingsNotice('Settings saved successfully! LLM engine updated.')
+        setSettingsNotice('Settings & Backend Server URL saved successfully!')
         setOpenaiKeyInput('')
         setGeminiKeyInput('')
         setTimeout(() => setSettingsNotice(''), 4000)
       } else {
-        setSettingsNotice('Failed to save settings.')
+        setSettingsNotice('Saved Backend URL. Failed to update API keys.')
       }
     } catch (e) {
-      setSettingsNotice('Error saving settings.')
+      setSettingsNotice('Saved Backend URL. Could not reach server for key updates.')
     } finally {
       setSavingSettings(false)
     }
@@ -291,20 +293,11 @@ export default function App() {
     }, 1500)
 
     try {
-      let res
-      try {
-        res = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query.trim() })
-        })
-      } catch (err1) {
-        res = await fetch(`${BACKEND_URL}/analyze`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query.trim() })
-        })
-      }
+      const res = await apiFetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim() })
+      })
 
       clearInterval(stepTimer)
 
@@ -1042,6 +1035,23 @@ export default function App() {
 
               {/* Form Controls */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', marginBottom: '6px' }}>
+                    Live Backend API Server URL
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="https://ai-system-live.loca.lt or http://127.0.0.1:8000"
+                    value={backendUrlInput}
+                    onChange={(e) => setBackendUrlInput(e.target.value)}
+                    className="input-field"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: 'rgba(10, 15, 26, 0.9)', color: '#fff', border: '1px solid var(--border-color)' }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                    Current Active Target: <strong style={{ color: '#818cf8' }}>{backendUrl}</strong>
+                  </span>
+                </div>
+
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', marginBottom: '6px' }}>
                     Preferred LLM Provider Strategy
