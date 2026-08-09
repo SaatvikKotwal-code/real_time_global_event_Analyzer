@@ -11,11 +11,11 @@ An advanced, real-time autonomous intelligence system powered by multi-agent AI 
 
 ## 🌟 Live Demonstration & Deployment Links
 
-- 🌐 **Primary Live Application (GitHub Pages)**: [https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/](https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/)
+- 🌐 **Primary Live Web Application (GitHub Pages)**: [https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/](https://saatvikkotwal-code.github.io/real_time_global_event_Analyzer/)
   - *Includes full **Standalone Interactive Demo Mode** directly in browser, permitting complete pipeline exploration, vector memory inspection, and sector risk tracking without requiring local backend installation.*
 - ⚡ **Live Public Backend Tunnel (Cloudflare)**: `https://picks-gen-comparison-experiments.trycloudflare.com`
   - *Active high-reliability live backend tunnel.*
-- ⚙️ **Local Backend API Documentation (Swagger UI)**: `http://localhost:8000/docs`
+- ⚙️ **Public Backend API Documentation (Swagger UI)**: [https://picks-gen-comparison-experiments.trycloudflare.com/docs](https://picks-gen-comparison-experiments.trycloudflare.com/docs)
 
 > 💡 **Connecting GitHub Pages to your Live Backend**:
 > Launch the backend tunnel using `python backend/launch_tunnel.py`. In the GitHub Pages web app, click **API Settings** in the top navigation bar and enter your live public tunnel URL (`https://picks-gen-comparison-experiments.trycloudflare.com`) to switch seamlessly between Standalone Demo Mode and Live AI Backend Mode!
@@ -52,7 +52,21 @@ graph TD
 - 💾 **Persistent RAG Vector Store**: Caches past research and daily scans to enhance future query context using vector memory embeddings.
 - 🔄 **Automated 24h Background Scheduler**: Performs automated daily background scans to track evolving risks and industry shifts.
 - 🎛️ **Multi-Model LLM Engine**: Seamlessly cascades between Google Gemini (Gemini 2.0 / 1.5 Flash), OpenAI (GPT-4o / GPT-4o-mini), and Smart Synthesizers.
-- 🎨 **Glassmorphism UI Dashboard**: Premium dark-mode user interface with real-time pipeline status tracking and interactive report viewers.
+- 🎨 **Glassmorphism UI Dashboard**: Premium dark-mode user interface with real-time pipeline status tracking, dynamic API key configuration, and interactive report viewers.
+
+---
+
+## 🔌 API Endpoints Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/analyze` | Execute the 5-agent autonomous intelligence research workflow |
+| `GET` | `/memory` | Retrieve stored long-term vector memory documents |
+| `GET` | `/risks` | Fetch real-time tracked sector risk indicators |
+| `POST` | `/scan/daily` | Manually trigger an immediate background daily scan batch |
+| `GET` | `/scan/status` | Get automated background scanner status & execution logs |
+| `GET` | `/settings/status` | Retrieve LLM engine provider status and API key readiness |
+| `POST` | `/settings/keys` | Dynamically update OpenAI / Gemini API keys and provider at runtime |
 
 ---
 
@@ -62,12 +76,15 @@ graph TD
 real_time_global_event_Analyzer/
 ├── backend/                  # FastAPI Python backend
 │   ├── agents/               # Multi-Agent definitions (Planner, Researcher, Analyst, Critic, Reporter)
-│   ├── api/                  # REST API routes & endpoints
-│   ├── memory/               # Persistent Vector Store & Automated Scheduler
+│   ├── api/                  # REST API routes & endpoints (/analyze, /memory, /risks, /scan, /settings)
+│   ├── memory/               # Persistent Vector Store & Automated 24h Background Scheduler
 │   ├── tools/                # Web Search, News API & RAG utilities
-│   ├── llm_factory.py        # LLM Engine Factory (Gemini / OpenAI / Fallback)
+│   ├── cloudflared.exe       # Cloudflare Tunnel binary executable
+│   ├── launch_tunnel.py      # Dual Launcher (FastAPI Backend + Cloudflare Tunnel)
+│   ├── llm_factory.py        # Multi-Model Engine (Gemini / OpenAI / Fallback)
 │   └── main.py               # FastAPI entry point & CORS configuration
 ├── frontend/                 # Vite + React Frontend Dashboard
+│   ├── public/               # Static assets & tunnel_url.json configuration
 │   ├── src/                  # React components & Glassmorphism design system
 │   │   ├── App.jsx           # Main Dashboard Console
 │   │   └── index.css         # Modern design tokens & micro-animations
@@ -84,7 +101,15 @@ real_time_global_event_Analyzer/
 - Python 3.10 or higher
 - Node.js v18 or higher
 
-### 2. Backend Setup
+### 2. Environment Configuration (Optional)
+Create a `.env` file in the `backend/` directory:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+PREFERRED_LLM_PROVIDER=gemini
+```
+
+### 3. Backend Setup
 ```bash
 cd backend
 python -m venv venv
@@ -95,14 +120,14 @@ python -m venv venv
 # Install Dependencies
 pip install -r requirements.txt
 
-# Run Local FastAPI Backend:
+# Run Local FastAPI Backend only:
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 
-# OR Run FastAPI Backend + Live Public Localtunnel concurrently:
+# OR Run FastAPI Backend + Live Public Cloudflare Tunnel concurrently:
 python launch_tunnel.py
 ```
 
-### 3. Frontend Setup
+### 4. Frontend Setup
 ```bash
 cd ../frontend
 npm install
@@ -116,3 +141,4 @@ Open **`http://localhost:3000`** in your browser to access the local dashboard.
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
