@@ -34,11 +34,11 @@ import {
   ShieldCheck
 } from 'lucide-react'
 
-const DEFAULT_TUNNEL_URL = 'https://ai-system-backend.loca.lt'
+const DEFAULT_TUNNEL_URL = 'https://picks-gen-comparison-experiments.trycloudflare.com'
 
 const getInitialBackendUrl = () => {
   const saved = localStorage.getItem('custom_backend_url')
-  if (saved && (saved.includes('ai-system-live') || !saved.trim())) {
+  if (saved && (saved.includes('ai-system-live') || saved.includes('trustees-calendar-word-seo') || (saved !== DEFAULT_TUNNEL_URL && saved.includes('trycloudflare.com')) || !saved.trim())) {
     localStorage.setItem('custom_backend_url', DEFAULT_TUNNEL_URL)
     return DEFAULT_TUNNEL_URL
   }
@@ -79,7 +79,72 @@ export default function App() {
   const [geminiKeyInput, setGeminiKeyInput] = useState('')
   const [preferredProviderInput, setPreferredProviderInput] = useState('auto')
   const [savingSettings, setSavingSettings] = useState(false)
+  const [testingUrl, setTestingUrl] = useState(false)
   const [settingsNotice, setSettingsNotice] = useState('')
+
+  // Interactive Standalone Demo Fallback Data Generators
+  const MOCK_SECTOR_RISKS = [
+    { sector: 'AI Tech & Hardware', risk_score: 78, level: 'HIGH', impact_summary: 'HBM3e Memory shortages & GPU cluster power constraints impacting 2026 scaling.' },
+    { sector: 'Cybersecurity & Cloud', risk_score: 64, level: 'MEDIUM', impact_summary: 'Zero-day edge router vulnerabilities targeted by autonomous threat actors.' },
+    { sector: 'Autonomous Robotics', risk_score: 52, level: 'MEDIUM', impact_summary: 'Regulatory delay in autonomous logistics deployment across EU/US corridors.' },
+    { sector: 'Semiconductor Supply', risk_score: 83, level: 'HIGH', impact_summary: 'Export controls on raw gallium & advanced EUV lithography tooling.' }
+  ]
+
+  const MOCK_VECTOR_MEMORIES = [
+    { id: 'mem_1', doc: 'Analysis of 2026 AI Agent hardware acceleration & persistent vector memory standards.', timestamp: '2026-08-08 01:20', sector: 'AI Tech & Hardware', similarity_score: 0.94 },
+    { id: 'mem_2', doc: 'Global semiconductor supply chain bottleneck mitigation strategies.', timestamp: '2026-08-07 18:45', sector: 'Semiconductor Supply', similarity_score: 0.89 },
+    { id: 'mem_3', doc: 'Edge router zero-day vulnerability mitigation and automated patching protocol.', timestamp: '2026-08-07 14:10', sector: 'Cybersecurity & Cloud', similarity_score: 0.86 }
+  ]
+
+  const generateDemoResults = (userQuery) => {
+    const cleanQ = userQuery.trim() || 'Global Technology & AI Market Overview'
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    
+    return {
+      query: cleanQ,
+      llm_used: "Interactive Demo Engine (Connect Live Backend for Gemini 2.0 / GPT-4o)",
+      plan: {
+        query: cleanQ,
+        sub_queries: [
+          `Analysis of ${cleanQ} trends and market drivers for 2026`,
+          `Risk assessment & security implications regarding ${cleanQ}`,
+          `Persistent vector memory retrieval and future projections`
+        ],
+        execution_steps: [
+          "1. Planner Agent: Deconstructing query into sub-domain analysis targets",
+          "2. Researcher Agent: Executing dynamic search and retrieving vector embeddings",
+          "3. Analyst Agent: Cross-referencing sector risk indicators & key metrics",
+          "4. Critic Agent: Auditing factual consistency & eliminating hallucinations",
+          "5. Reporter Agent: Compiling executive report & committing vector memory"
+        ]
+      },
+      research_data: {
+        web_results: [
+          {
+            title: `2026 Strategic Intelligence Brief: ${cleanQ}`,
+            snippet: `Recent empirical evaluations regarding ${cleanQ} reveal significant operational shifts across enterprise deployments...`,
+            url: `https://intelligence-network.org/reports/2026-${encodeURIComponent(cleanQ.toLowerCase().slice(0, 15))}`
+          },
+          {
+            title: `Global Infrastructure & Risk Assessment`,
+            snippet: `Autonomous systems and multi-agent frameworks report accelerated adoption rates with integrated persistent RAG memory...`,
+            url: `https://tech-monitor.global/analysis/vector-rag-2026`
+          }
+        ],
+        news_articles: [
+          {
+            title: `Emerging Shifts in ${cleanQ}`,
+            source: "Global Intelligence Wire",
+            url: "https://globalintelligencewire.com/latest"
+          }
+        ],
+        rag_memories_found: 3
+      },
+      analytical_insights: `Analysis indicates that ${cleanQ} represents a critical pivot point in 2026 enterprise strategy. Integration of multi-agent orchestration, persistent vector store indexing, and dynamic risk mitigation frameworks drastically reduces latency and operational overhead.`,
+      critic_review: `Validation confirmed: Multi-agent logical synthesis holds high confidence score (0.96). No contradictory facts or unverified assertions detected across global intelligence sources.`,
+      final_report: `# 📊 Intelligence Report: ${cleanQ}\n\n*Generated on ${dateStr} • Multi-Agent Pipeline (Planner → Researcher → Analyst → Critic → Reporter)*\n\n---\n\n## 💡 Executive Summary\nThis report provides an in-depth strategic analysis of **${cleanQ}**. Based on real-time web scans, persistent vector memory embeddings, and cross-sector risk tracking, the current intelligence index indicates high strategic momentum accompanied by emerging regulatory and supply chain developments.\n\n### 🔑 Key Findings & Strategic Metrics\n- 🚀 **Market Growth & Adoption**: Enterprise multi-agent system adoption reached record highs in 2026, driven by automated RAG memory retention.\n- 🛡️ **Risk Index**: Critical infrastructure indicators remain baseline stable, with targeted monitoring recommended on hardware and cloud edge nodes.\n- ⚙️ **Architecture Integration**: Dynamic fallback cascading between LLM providers ensures high uptime during high-demand analysis operations.\n\n---\n\n## 🤖 Multi-Agent Execution Breakdown\n1. **Planner Agent**: Successfully decomposed original query into targeted sub-queries.\n2. **Researcher Agent**: Scanned web sources and retrieved matching historical vector memories.\n3. **Analyst Agent**: Identified key quantitative indicators and sector risk correlations.\n4. **Critic Agent**: Verified zero hallucinated claims and validated source citations.\n5. **Reporter Agent**: Structured final Markdown output and indexed vector memory.\n\n> 💡 *Note: You are viewing an interactive demo report. To connect your live Gemini 2.0 or OpenAI key and execute live web scans against FastAPI, click "API Settings" in the top bar and launch your live backend!*`
+    }
+  }
 
   // Helper for cross-origin backend calls with tunnel bypass headers
   const apiFetch = async (endpoint, options = {}) => {
@@ -134,50 +199,97 @@ export default function App() {
     try {
       const res = await apiFetch('/')
       if (res && res.ok) {
-        const data = await res.json()
-        setSystemStatus({ online: true, message: data.status || 'System Running 🚀' })
-      } else {
-        setSystemStatus({ online: false, message: `Server unreachable (${backendUrl})` })
+        const contentType = res.headers.get('content-type') || ''
+        if (contentType.includes('application/json')) {
+          const data = await res.json()
+          if (data && data.status) {
+            setSystemStatus({ online: true, message: data.status || 'Live Backend Connected 🚀' })
+            return
+          }
+        }
       }
+      
+      // Auto-heal: Try fetching active tunnel URL from public json
+      try {
+        const tunnelRes = await fetch('./tunnel_url.json?t=' + Date.now())
+        if (tunnelRes.ok) {
+          const tunnelData = await tunnelRes.json()
+          if (tunnelData.url && tunnelData.url !== backendUrl) {
+            setBackendUrl(tunnelData.url)
+            setBackendUrlInput(tunnelData.url)
+            localStorage.setItem('custom_backend_url', tunnelData.url)
+            const newRes = await fetch(`${tunnelData.url.replace(/\/$/, '')}/`, {
+              headers: { 'bypass-tunnel-reminder': 'true', 'ngrok-skip-browser-warning': 'true' }
+            })
+            if (newRes.ok) {
+              const newData = await newRes.json()
+              if (newData && newData.status) {
+                setSystemStatus({ online: true, message: newData.status || 'Live Backend Connected 🚀' })
+                return
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // ignore fallback errors
+      }
+
+      setSystemStatus({ online: false, message: 'Standalone Interactive Demo Mode' })
     } catch (err) {
-      setSystemStatus({ online: false, message: `Server offline (${backendUrl})` })
+      setSystemStatus({ online: false, message: 'Standalone Interactive Demo Mode' })
     }
   }
 
   const fetchScanStatus = async () => {
     try {
       const res = await apiFetch('/scan/status')
-      if (res && res.ok) {
+      if (res && res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json()
         setScanStatus(data)
+        return
       }
     } catch (e) {
-      console.log('Error fetching scan status', e)
+      // Fallback
     }
+    setScanStatus({
+      scheduler_active: true,
+      interval_hours: 24,
+      monitored_sectors: ["AI Tech & Hardware", "Cybersecurity & Cloud", "Autonomous Robotics", "Semiconductor Supply"],
+      total_memories_cached: vectorMemories.length || 4,
+      last_scan_timestamp: "2026-08-08 00:00:00"
+    })
   }
 
   const fetchSectorRisks = async () => {
     try {
       const res = await apiFetch('/risks')
-      if (res && res.ok) {
+      if (res && res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json()
-        setSectorRisks(data.risks || [])
+        if (data.risks && data.risks.length > 0) {
+          setSectorRisks(data.risks)
+          return
+        }
       }
     } catch (e) {
-      console.log('Error fetching risks', e)
+      // Fallback
     }
+    setSectorRisks(MOCK_SECTOR_RISKS)
   }
 
   const fetchVectorMemories = async () => {
     try {
       const res = await apiFetch('/memory')
-      if (res && res.ok) {
+      if (res && res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json()
-        setVectorMemories(data.memories || [])
+        if (data.memories && data.memories.length > 0) {
+          setVectorMemories(data.memories)
+          return
+        }
       }
     } catch (e) {
-      console.log('Error fetching vector memories', e)
+      // Fallback
     }
+    setVectorMemories(prev => prev.length > 0 ? prev : MOCK_VECTOR_MEMORIES)
   }
 
   const triggerDailyScan = async () => {
@@ -185,31 +297,66 @@ export default function App() {
     setScanNotice('')
     try {
       const res = await apiFetch('/scan/daily', { method: 'POST' })
-      if (res && res.ok) {
+      if (res && res.ok && res.headers.get('content-type')?.includes('application/json')) {
         setScanNotice('Automated daily scan batch triggered across all monitored sectors!')
         setTimeout(() => {
           fetchScanStatus()
           fetchVectorMemories()
           fetchSectorRisks()
         }, 3000)
+        return
       }
     } catch (e) {
-      setScanNotice('Failed to trigger scan batch.')
-    } finally {
-      setScanTriggering(false)
+      // Fallback
     }
+    setScanNotice('Interactive Demo Mode: Daily background scan simulated successfully.')
+    setScanTriggering(false)
   }
 
   const fetchSettingsStatus = async () => {
     try {
       const res = await apiFetch('/settings/status')
-      if (res && res.ok) {
+      if (res && res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json()
         setLlmStatus(data)
         if (data.preferred_provider) setPreferredProviderInput(data.preferred_provider)
       }
     } catch (e) {
       console.log('Error fetching LLM settings status', e)
+    }
+  }
+
+  const testBackendConnection = async () => {
+    setTestingUrl(true)
+    setSettingsNotice('')
+    try {
+      const cleanTarget = backendUrlInput.trim().replace(/\/$/, '')
+      const res = await fetch(`${cleanTarget}/`, {
+        headers: {
+          'bypass-tunnel-reminder': 'true',
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      if (res && res.ok) {
+        const contentType = res.headers.get('content-type') || ''
+        if (contentType.includes('application/json')) {
+          const data = await res.json()
+          setSettingsNotice(`✅ Connection Successful! Target server online: "${data.status || 'Running'}"`)
+          localStorage.setItem('custom_backend_url', cleanTarget)
+          setBackendUrl(cleanTarget)
+          checkHealth()
+          return
+        } else {
+          setSettingsNotice(`⚠️ Tunnel active but localtunnel requires IP password verification. Click to open ${cleanTarget} and approve, then retry.`)
+          return
+        }
+      } else {
+        setSettingsNotice(`⚠️ Target responded with status ${res.status}. Ensure backend tunnel process is active.`)
+      }
+    } catch (e) {
+      setSettingsNotice(`❌ Unable to reach ${backendUrlInput}. Run "python backend/launch_tunnel.py" on your machine to start the server!`)
+    } finally {
+      setTestingUrl(false)
     }
   }
 
@@ -240,18 +387,35 @@ export default function App() {
         setSettingsNotice('Settings & Backend Server URL saved successfully!')
         setOpenaiKeyInput('')
         setGeminiKeyInput('')
+        checkHealth()
         setTimeout(() => setSettingsNotice(''), 4000)
       } else {
-        setSettingsNotice('Saved Backend URL. Failed to update API keys.')
+        setSettingsNotice('Saved Backend URL. Target server offline or keys unverified.')
+        checkHealth()
       }
     } catch (e) {
-      setSettingsNotice('Saved Backend URL. Could not reach server for key updates.')
+      setSettingsNotice('Saved Backend URL locally. Server unreachable for remote key updates.')
+      checkHealth()
     } finally {
       setSavingSettings(false)
     }
   }
 
   useEffect(() => {
+    fetch('./tunnel_url.json')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.url) {
+          const currentSaved = localStorage.getItem('custom_backend_url')
+          if (!currentSaved || currentSaved.includes('loca.lt')) {
+            localStorage.setItem('custom_backend_url', data.url)
+            setBackendUrl(data.url)
+            setBackendUrlInput(data.url)
+          }
+        }
+      })
+      .catch(() => {})
+
     checkHealth()
     fetchScanStatus()
     fetchSectorRisks()
@@ -295,12 +459,40 @@ export default function App() {
     setActiveStep(1)
     setLoadingText('Initializing pipeline...')
 
-    // Simulate animated step progression while backend processes
+    // Animated step progression helper
     const stepTimer = setInterval(() => {
       setActiveStep(prev => (prev < 4 ? prev + 1 : prev))
-    }, 1500)
+    }, 1200)
 
     try {
+      if (!systemStatus.online) {
+        // Run in Interactive Standalone Demo Mode
+        await new Promise(r => setTimeout(r, 1200))
+        setActiveStep(2)
+        await new Promise(r => setTimeout(r, 1200))
+        setActiveStep(3)
+        await new Promise(r => setTimeout(r, 1200))
+        setActiveStep(4)
+        await new Promise(r => setTimeout(r, 1200))
+        setActiveStep(5)
+
+        clearInterval(stepTimer)
+        const demoData = generateDemoResults(query.trim())
+        setResults(demoData)
+        setHistory(prev => [{ query: query.trim(), date: new Date().toLocaleTimeString(), data: demoData }, ...prev.slice(0, 19)])
+        setVectorMemories(prev => [
+          {
+            id: `mem_${Date.now()}`,
+            doc: `Interactive Intelligence Report for: "${query.trim()}"`,
+            timestamp: new Date().toLocaleString(),
+            sector: 'AI Tech & Hardware',
+            similarity_score: 0.95
+          },
+          ...prev
+        ])
+        return
+      }
+
       const res = await apiFetch('/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -321,8 +513,13 @@ export default function App() {
       fetchVectorMemories()
     } catch (err) {
       clearInterval(stepTimer)
-      setErrorMsg(err.message || 'Failed to communicate with multi-agent pipeline.')
-      setActiveStep(0)
+      console.log('Backend request failed, falling back to Interactive Demo Mode', err)
+      setActiveStep(5)
+      const fallbackData = generateDemoResults(query.trim())
+      setResults(fallbackData)
+      setHistory(prev => [{ query: query.trim(), date: new Date().toLocaleTimeString(), data: fallbackData }, ...prev.slice(0, 19)])
+      setScanNotice('Backend connection unavailable. Generated Interactive Standalone Report.')
+      setTimeout(() => setScanNotice(''), 5000)
     } finally {
       setLoading(false)
     }
@@ -379,27 +576,32 @@ export default function App() {
           </div>
         </div>
 
-        {/* System Health Badge */}
+        {/* System Health Badge & Settings */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 14px',
-            borderRadius: '20px',
-            background: systemStatus.online ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
-            border: `1px solid ${systemStatus.online ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)'}`
-          }}>
+          <div 
+            onClick={() => setSettingsModalOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              background: systemStatus.online ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 102, 241, 0.15)',
+              border: `1px solid ${systemStatus.online ? 'rgba(16, 185, 129, 0.4)' : 'rgba(99, 102, 241, 0.4)'}`,
+              cursor: 'pointer'
+            }}
+            title="Click to configure backend API URL or keys"
+          >
             <span style={{
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              backgroundColor: systemStatus.online ? '#10b981' : '#f43f5e',
-              boxShadow: systemStatus.online ? '0 0 8px #10b981' : '0 0 8px #f43f5e',
-              animation: systemStatus.online ? 'pulseGlow 2s infinite' : 'none'
+              backgroundColor: systemStatus.online ? '#10b981' : '#818cf8',
+              boxShadow: systemStatus.online ? '0 0 8px #10b981' : '0 0 8px #818cf8',
+              animation: 'pulseGlow 2s infinite'
             }} />
-            <span style={{ fontSize: '0.85rem', fontWeight: '500', color: systemStatus.online ? '#34d399' : '#fb7185' }}>
-              {systemStatus.message}
+            <span style={{ fontSize: '0.85rem', fontWeight: '600', color: systemStatus.online ? '#34d399' : '#c7d2fe' }}>
+              {systemStatus.online ? '● Live Backend (FastAPI)' : '● Interactive Demo Mode'}
             </span>
           </div>
           <button 
@@ -1047,16 +1249,31 @@ export default function App() {
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#e5e7eb', marginBottom: '6px' }}>
                     Live Backend API Server URL
                   </label>
-                  <input 
-                    type="text"
-                    placeholder="https://ai-system-live.loca.lt or http://127.0.0.1:8000"
-                    value={backendUrlInput}
-                    onChange={(e) => setBackendUrlInput(e.target.value)}
-                    className="input-field"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: 'rgba(10, 15, 26, 0.9)', color: '#fff', border: '1px solid var(--border-color)' }}
-                  />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input 
+                      type="text"
+                      placeholder="https://ai-system-backend.loca.lt or http://127.0.0.1:8000"
+                      value={backendUrlInput}
+                      onChange={(e) => setBackendUrlInput(e.target.value)}
+                      className="input-field"
+                      style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', background: 'rgba(10, 15, 26, 0.9)', color: '#fff', border: '1px solid var(--border-color)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={testBackendConnection}
+                      disabled={testingUrl}
+                      className="btn-secondary"
+                      style={{ padding: '10px 16px', borderRadius: '8px', fontSize: '0.85rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {testingUrl ? <RefreshCw style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Activity style={{ width: '14px', height: '14px', color: '#818cf8' }} />}
+                      {testingUrl ? 'Testing...' : 'Test Connection'}
+                    </button>
+                  </div>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                     Current Active Target: <strong style={{ color: '#818cf8' }}>{backendUrl}</strong>
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>
+                    💡 <em>GitHub Pages requires an HTTPS tunnel URL (e.g. `https://...loca.lt`) to bypass browser mixed-content restrictions.</em>
                   </span>
                 </div>
 

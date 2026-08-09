@@ -16,5 +16,7 @@ __pycache__/
 # IDE & System
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db
+# Executables & Tunnels
+*.exe
+backend/tunnel_url.txt
+
